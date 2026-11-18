@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: notas-mcp-server
+  ai:
+    mcp:
+      server:
+        name: notas-mcp-server
+        version: 1.0.0
+        type: sync
+        stdio: true
+  datasource:
+    url: jdbc:sqlite:notas.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.aabg.notas: DEBUG
+    org.springframework.ai.mcp: DEBUG
