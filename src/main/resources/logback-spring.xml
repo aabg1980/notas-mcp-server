@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuración de logging para el servidor MCP con transporte STDIO.
+  El protocolo MCP usa stdout para el intercambio de mensajes JSON-RPC, por lo que
+  TODO el registro se escribe exclusivamente a archivo para no corromper el canal.
+-->
+<configuration>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>notas-mcp-server.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
