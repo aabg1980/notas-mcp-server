@@ -1,17 +1,17 @@
 # Notas MCP Server 🎓
 
-> **Servidor MCP (Model Context Protocol)** desarrollado en **Java 21** con **Spring AI** y base de datos local **SQLite**, diseñado para que asistentes y agentes de Inteligencia Artificial gestionen de forma autónoma y estructurada estudiantes, cursos, evaluaciones y calificaciones con cálculo automático de notas definitivas ponderadas.
+> **Servidor MCP (Model Context Protocol)** desarrollado en **Java 25** con **Spring Boot 4.x** y **Spring AI 2.0.x**, con persistencia local en **SQLite**, diseñado para que asistentes y agentes de Inteligencia Artificial gestionen de forma autónoma y estructurada estudiantes, cursos, evaluaciones y calificaciones con cálculo automático de notas definitivas ponderadas.
 
 ---
 
 ## 📋 1. Definición del Proyecto
 
-El **Notas MCP Server** actúa como un puente estandarizado mediante el protocolo abierto **Model Context Protocol (MCP)**, permitiendo a Modelos de Lenguaje (LLMs) como Claude, Gemini, ChatGPT o agentes autónomos interactuar con un sistema de gestión académica local.
+El **Notas MCP Server** actúa como un puente estandarizado mediante el protocolo abierto **Model Context Protocol (MCP)**, permitiendo a Modelos de Lenguaje (LLMs) como Claude, Gemini, ChatGPT o agentes autónomos interactuar con un sistema de gestión académica local de alto rendimiento.
 
 ### Objetivos Clave:
-* **Autonomía para Asistentes IA:** Exponer herramientas tipadas (`@Tool`) que permiten registrar estudiantes, definir cursos y pruebas académicas con pesos porcentuales, asentar notas y calcular promedios ponderados.
-* **Persistencia Ligera y Confiable:** Uso de una base de datos local **SQLite**, garantizando portabilidad sin necesidad de levantar infraestructura de bases de datos externa.
-* **Código Limpio y Mantenible:** Aplicación estricta de principios **SOLID**, **Clean Code** y **Clean Architecture (Puertos y Adaptadores)** para separar el dominio académico de la infraestructura MCP y de base de datos.
+* **Autonomía para Asistentes IA:** Exponer herramientas fuertemente tipadas (`@Tool`) que permiten registrar estudiantes, definir cursos y pruebas académicas con pesos porcentuales, asentar notas y calcular promedios ponderados.
+* **Persistencia Ligera y Confiable:** Uso de una base de datos local **SQLite**, garantizando portabilidad absoluta y cero dependencias de red o servicios externos.
+* **Vanguardia Tecnológica y Código Limpio:** Aprovechar las innovaciones de **Java 25** (Enhanced Virtual Threads, Stream Gatherers, Records inmutables, Pattern Matching) y la arquitectura modular de **Spring Boot 4 / Spring Framework 7**, siguiendo estrictamente principios **SOLID**, **Clean Code** y **Clean Architecture (Puertos y Adaptadores)**.
 
 ---
 
@@ -19,11 +19,11 @@ El **Notas MCP Server** actúa como un puente estandarizado mediante el protocol
 
 | Componente | Tecnología | Versión | Justificación |
 | :--- | :--- | :--- | :--- |
-| **Lenguaje** | Java | 21 (LTS) | Uso de records, pattern matching, virtual threads y tipos inmutables. |
-| **Framework Base** | Spring Boot | 3.4.x | Ecosistema maduro de inyección de dependencias, configuración y pruebas. |
-| **Integración IA/MCP** | Spring AI | 1.0.0 | Soporte nativo de MCP Server con transporte STDIO (local) y SSE (HTTP). |
-| **Base de Datos** | SQLite | 3.x | Base de datos embebida en archivo local (`notas.db`), sin dependencias de red. |
-| **Capa de Persistencia** | Spring Data JPA + Hibernate Community | 6.x | Abstracción ORM con dialecto comunitario oficial de SQLite. |
+| **Lenguaje** | Java | 25 (LTS) | Virtual Threads de alta concurrencia, Stream Gatherers, Records inmutables y Pattern Matching. |
+| **Framework Base** | Spring Boot | 4.0.x | Basado en Spring Framework 7 y Jakarta EE 11; arquitectura modular y soporte nativo Java 25. |
+| **Integración IA/MCP** | Spring AI | 2.0.x | Soporte de MCP Server compatible con Spring Boot 4 (transporte STDIO local y SSE/HTTP). |
+| **Base de Datos** | SQLite | 3.x | Motor SQL embebido local en archivo (`notas.db`), rápido, ligero y autónomo. |
+| **Capa de Persistencia** | Spring Data JPA + Hibernate Community | 7.x | Abstracción ORM con dialecto comunitario oficial de SQLite compatible con Jakarta EE 11. |
 | **Controlador JDBC** | `org.xerial:sqlite-jdbc` | 3.47.x | Driver JDBC nativo de alto rendimiento para SQLite. |
 | **Gestor de Compilación**| Apache Maven + Maven Wrapper | 3.9.x (`mvnw`) | Builds reproducibles y portables entre entornos y CI/CD. |
 | **Pruebas Unitarias** | JUnit 5 + AssertJ + Mockito | - | Verificación aislada de reglas de negocio y cálculo de notas. |
@@ -32,7 +32,7 @@ El **Notas MCP Server** actúa como un puente estandarizado mediante el protocol
 
 ## 🏛️ 3. Arquitectura y Clean Code
 
-El sistema adopta **Clean Architecture (Arquitectura Hexagonal / Puertos y Adaptadores)** para asegurar que las reglas del negocio educativo no dependan de frameworks externos:
+El sistema implementa **Clean Architecture (Arquitectura Hexagonal / Puertos y Adaptadores)** garantizando que el dominio académico sea completamente agnóstico de frameworks, controladores MCP o bases de datos:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -48,7 +48,7 @@ El sistema adopta **Clean Architecture (Arquitectura Hexagonal / Puertos y Adapt
 │   │                   APPLICATION (Casos de Uso)                   │   │
 │   │                                                                │   │
 │   │   • StudentService           • GradeCalculationService         │   │
-│   │   • EvaluationService        • DTOs (Records inmutables)       │   │
+│   │   • EvaluationService        • DTOs (Java 25 Records)          │   │
 │   │                                                                │   │
 │   │   ┌────────────────────────────────────────────────────────┐   │   │
 │   │   │                    DOMAIN (Núcleo)                     │   │   │
@@ -62,16 +62,16 @@ El sistema adopta **Clean Architecture (Arquitectura Hexagonal / Puertos y Adapt
 ```
 
 ### Principios Clean Code aplicados:
-1. **Single Responsibility (SRP):** Cada servicio se enfoca en un único agregado (estudiantes, evaluaciones o calificaciones).
-2. **Inmutabilidad:** DTOs y modelos de transferencia modelados como Java `record`.
+1. **Single Responsibility (SRP):** Servicios separados por agregado de dominio (estudiantes, cursos, pruebas y calificaciones).
+2. **Inmutabilidad y Tipado Fuerte:** DTOs y modelos de transferencia basados en Java 25 `record`.
 3. **Validación Temprana:** Excepciones de dominio específicas (`StudentNotFoundException`, `InvalidWeightException`, `GradeOutOfRangeException`).
-4. **Desacoplamiento:** Los controladores MCP (`@Tool`) no conocen la base de datos directamente, interactúan mediante puertos de aplicación.
+4. **Desacoplamiento Absoluto:** Las herramientas MCP (`@Tool`) son adaptadores de entrada delegando exclusivamente en casos de uso de la capa de aplicación.
 
 ---
 
 ## 📁 4. Scaffolding del Proyecto
 
-Estructura de directorios estandarizada:
+Estructura de directorios y paquetes:
 
 ```text
 notas-mcp-server/
@@ -98,7 +98,7 @@ notas-mcp-server/
 │   │   │   │       ├── EntityNotFoundException.java
 │   │   │   │       └── BusinessRuleException.java
 │   │   │   ├── application/                    # Casos de uso
-│   │   │   │   ├── dto/                        # Records inmutables (Input / Output)
+│   │   │   │   ├── dto/                        # Java 25 Records inmutables
 │   │   │   │   │   ├── StudentDto.java
 │   │   │   │   │   ├── CourseDto.java
 │   │   │   │   │   ├── EvaluationDto.java
@@ -111,7 +111,7 @@ notas-mcp-server/
 │   │   │   │       └── GradeCalculationService.java
 │   │   │   ├── infrastructure/                 # Adaptadores tecnológicos
 │   │   │   │   ├── persistence/                # SQLite + Spring Data JPA
-│   │   │   │   │   ├── entity/                 # Entidades JPA
+│   │   │   │   │   ├── entity/                 # Entidades JPA (Jakarta EE 11)
 │   │   │   │   │   │   ├── StudentEntity.java
 │   │   │   │   │   │   ├── CourseEntity.java
 │   │   │   │   │   │   ├── EvaluationEntity.java
@@ -134,7 +134,7 @@ notas-mcp-server/
 │   │   │   │       │   └── GradeMcpTools.java
 │   │   │   │       └── config/                 # Configuración de MCP Server
 │   │   │   │           └── McpServerConfig.java
-│   │   │   └── NotasMcpApplication.java        # Punto de entrada Spring Boot
+│   │   │   └── NotasMcpApplication.java        # Punto de entrada Spring Boot 4
 │   │   └── resources/
 │   │       ├── application.yml                 # Configuración general y SQLite
 │   │       ├── schema.sql                      # Inicialización DDL de SQLite
@@ -250,7 +250,7 @@ gitGraph
 ## 🚀 8. Configuración e Instalación
 
 ### Requisitos Previos:
-* Java JDK 21 o superior instalado.
+* **Java JDK 25** (LTS) instalado y configurado en `JAVA_HOME`.
 * Git.
 
 ### Compilación:
