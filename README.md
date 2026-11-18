@@ -158,33 +158,64 @@ notas-mcp-server/
 
 ```mermaid
 erDiagram
-    COURSES ||--o{ EVALUATIONS : "contiene"
-    STUDENTS ||--o{ GRADES : "obtiene"
-    EVALUATIONS ||--o{ GRADES : "evalúa"
+    COURSES ||--o{ COURSE_ENROLLMENTS : "matricula"
+    STUDENTS ||--o{ COURSE_ENROLLMENTS : "se inscribe"
+    COURSES ||--o{ ASSESSMENT_CATEGORIES : "define rubros"
+    ASSESSMENT_CATEGORIES ||--o{ EVALUATIONS : "contiene pruebas"
+    EVALUATIONS ||--o{ RUBRIC_CRITERIA : "especifica rúbrica"
+    STUDENTS ||--o{ GRADES : "recibe calificación"
+    EVALUATIONS ||--o{ GRADES : "evalúa con nota"
 
     COURSES {
         INTEGER id PK "Autoincrement"
-        VARCHAR code UK "Código único (ej. MAT101)"
-        VARCHAR name "Nombre de la materia"
-        VARCHAR academic_period "Periodo (ej. 2026-1)"
+        VARCHAR code "Código asignatura (ej. MAT101)"
+        VARCHAR name "Nombre de la asignatura"
+        VARCHAR academic_period "Periodo académico (ej. 2026-1)"
+        VARCHAR group_id "ID de grupo (ej. G01, G02)"
     }
 
     STUDENTS {
         INTEGER id PK "Autoincrement"
-        VARCHAR code UK "Código de estudiante (ej. EST-001)"
+        VARCHAR code UK "Código único (ej. EST-001)"
         VARCHAR first_name "Nombres"
         VARCHAR last_name "Apellidos"
         VARCHAR email UK "Correo institucional"
         VARCHAR status "Estado (ACTIVE, INACTIVE)"
     }
 
+    COURSE_ENROLLMENTS {
+        INTEGER id PK "Autoincrement"
+        INTEGER course_id FK "ID de la asignatura/grupo"
+        INTEGER student_id FK "ID del estudiante"
+        DATETIME enrolled_at "Fecha de matrícula"
+    }
+
+    ASSESSMENT_CATEGORIES {
+        INTEGER id PK "Autoincrement"
+        INTEGER course_id FK "ID de la asignatura"
+        VARCHAR name "Nombre del rubro (Quices, Parciales)"
+        VARCHAR description "Descripción"
+        DECIMAL weight_percentage "Peso del rubro en la materia (0-100%)"
+    }
+
     EVALUATIONS {
         INTEGER id PK "Autoincrement"
-        INTEGER course_id FK "ID de la materia"
-        VARCHAR name "Nombre (Parcial 1, Taller 1)"
-        VARCHAR description "Descripción"
-        DECIMAL weight "Peso porcentual (0.0 a 100.0)"
+        INTEGER category_id FK "ID del rubro"
+        VARCHAR name "Nombre de la prueba (Quiz 1, Parcial 1)"
+        VARCHAR description "Descripción o temario"
+        VARCHAR evaluation_type "Modalidad (INDIVIDUAL o GROUP)"
+        DECIMAL weight_within_category "Peso dentro del rubro (0-100%)"
         DATE due_date "Fecha límite de entrega"
+        TEXT rubric_description "Descripción general de la rúbrica"
+    }
+
+    RUBRIC_CRITERIA {
+        INTEGER id PK "Autoincrement"
+        INTEGER evaluation_id FK "ID de la prueba"
+        VARCHAR name "Criterio (ej. Claridad, Código Limpio)"
+        VARCHAR description "Descripción detallada del criterio"
+        DECIMAL max_points "Puntaje máximo asignable"
+        DECIMAL weight_percentage "Peso del criterio en la prueba"
     }
 
     GRADES {
@@ -199,9 +230,15 @@ erDiagram
 
 ### Reglas e Integridad de la Base de Datos:
 1. **Escala de Calificación:** La columna `score` tiene constraint `CHECK (score >= 0.0 AND score <= 5.0)`.
-2. **Ponderación de Pruebas:** Cada `weight` está validado entre `0.0` y `100.0`. La sumatoria de evaluaciones de un curso no puede superar el `100.0%`.
-3. **Unicidad de Nota:** Constraint `UNIQUE(student_id, evaluation_id)` para impedir calificaciones duplicadas por prueba para un mismo alumno.
-4. **Claves Foráneas Activas:** SQLite requiere habilitar explícitamente `PRAGMA foreign_keys = ON;`.
+2. **Jerarquía Ponderada:** 
+   - La suma de `weight_percentage` de los rubros de una asignatura no supera el `100.0%`.
+   - Cada prueba tiene su `weight_within_category` relativo al rubro al que pertenece (ej. 50% y 50% para dos quices dentro del rubro 'Quices').
+3. **Modalidad de Pruebas:** `evaluation_type` validado con `CHECK (evaluation_type IN ('INDIVIDUAL', 'GROUP'))`.
+4. **Rúbricas de Evaluación:** Cada prueba cuenta con criterios estructurados en `rubric_criteria` con puntajes y pesos específicos.
+5. **Matrícula y Unicidad:** 
+   - `UNIQUE(course_id, student_id)` en matrículas.
+   - `UNIQUE(student_id, evaluation_id)` para impedir calificaciones duplicadas por prueba para un mismo alumno.
+6. **Claves Foráneas Activas:** SQLite configurado con `PRAGMA foreign_keys = ON;` y modo WAL activado para concurrencia segura.
 
 ---
 
