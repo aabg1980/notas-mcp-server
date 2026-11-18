@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS courses (
     name TEXT NOT NULL,
     academic_period TEXT NOT NULL,
     group_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK(status IN ('OPEN', 'CLOSED')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_course_period_group UNIQUE (code, academic_period, group_id)
 );
