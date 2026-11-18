@@ -107,8 +107,8 @@ public class EvaluationRepositoryAdapter implements EvaluationRepository {
             RubricCriterionEntity entity = new RubricCriterionEntity(
                     criterion.getId(),
                     evaluationId,
-                    criterion.getName(),
-                    criterion.getDescription(),
+                    criterion.getName().value(),
+                    criterion.getDescription().value(),
                     criterion.getMaxPoints().value().doubleValue(),
                     criterion.getWeight().value().doubleValue());
             RubricCriterionEntity saved = jpaRubricCriterionRepository.save(entity);
@@ -134,7 +134,7 @@ public class EvaluationRepositoryAdapter implements EvaluationRepository {
                     grade.getStudentId(),
                     evaluationId,
                     grade.getScore().value().doubleValue(),
-                    grade.getFeedback());
+                    grade.getFeedback().value());
             GradeEntity saved = jpaGradeRepository.save(entity);
             keptIds.add(saved.getId());
         }
@@ -152,12 +152,12 @@ public class EvaluationRepositoryAdapter implements EvaluationRepository {
         return new EvaluationEntity(
                 domain.getId(),
                 domain.getCategoryId(),
-                domain.getName(),
-                domain.getDescription(),
+                domain.getName().value(),
+                domain.getDescription().value(),
                 domain.getType().name(),
                 domain.getWeightWithinCategory().value().doubleValue(),
                 domain.getDueDate(),
-                domain.getRubricDescription());
+                domain.getRubricDescription().value());
     }
 
     private Evaluation toDomainWithChildren(EvaluationEntity entity) {

@@ -69,7 +69,7 @@ class EvaluationTest {
 
         assertThat(grade.getStudentId()).isEqualTo(100L);
         assertThat(grade.getScore()).isEqualTo(GradeScore.of("4.50"));
-        assertThat(grade.getFeedback()).isEqualTo("Excelente trabajo");
+        assertThat(grade.getFeedback().value()).isEqualTo("Excelente trabajo");
         assertThat(evaluation.getGrades()).hasSize(1);
         assertThat(grade.isPassing()).isTrue();
     }
@@ -85,7 +85,7 @@ class EvaluationTest {
         assertThat(updated).isSameAs(original);
         assertThat(evaluation.getGrades()).hasSize(1);
         assertThat(updated.getScore()).isEqualTo(GradeScore.of("4.80"));
-        assertThat(updated.getFeedback()).isEqualTo("Corrección aceptada");
+        assertThat(updated.getFeedback().value()).isEqualTo("Corrección aceptada");
     }
 
     @Test

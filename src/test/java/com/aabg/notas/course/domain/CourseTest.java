@@ -23,11 +23,11 @@ class CourseTest {
     @Test
     @DisplayName("create: crea una asignatura abierta y normaliza código y grupo")
     void createNormalizesCodeAndGroupId() {
-        Course course = Course.create("mat101", "Matemáticas I", "2026-1", "g01");
+        Course course = Course.create("mat101", "Matemáticas I", "2027-1", "g01");
 
         assertThat(course.getId()).isNull();
-        assertThat(course.getCode()).isEqualTo("MAT101");
-        assertThat(course.getGroupId()).isEqualTo("G01");
+        assertThat(course.getCode().value()).isEqualTo("MAT101");
+        assertThat(course.getGroupId().value()).isEqualTo("G01");
         assertThat(course.getStatus()).isEqualTo(CourseStatus.OPEN);
         assertThat(course.getCategories()).isEmpty();
         assertThat(course.totalWeight()).isEqualByComparingTo(BigDecimal.ZERO);
@@ -36,24 +36,40 @@ class CourseTest {
     @Test
     @DisplayName("create: rechaza datos obligatorios vacíos")
     void createRejectsBlankFields() {
-        assertThatThrownBy(() -> Course.create("", "Matemáticas I", "2026-1", "G01"))
+        assertThatThrownBy(() -> Course.create("", "Matemáticas I", "2027-1", "G01"))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("código");
-        assertThatThrownBy(() -> Course.create("MAT101", "  ", "2026-1", "G01"))
+        assertThatThrownBy(() -> Course.create("MAT101", "  ", "2027-1", "G01"))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("nombre");
         assertThatThrownBy(() -> Course.create("MAT101", "Matemáticas I", "", "G01"))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("periodo académico");
-        assertThatThrownBy(() -> Course.create("MAT101", "Matemáticas I", "2026-1", null))
+        assertThatThrownBy(() -> Course.create("MAT101", "Matemáticas I", "2027-1", null))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("grupo");
     }
 
     @Test
+    @DisplayName("AcademicPeriod: catálogo finito de periodos válidos (enum)")
+    void academicPeriodIsAFiniteCatalog() {
+        assertThat(AcademicPeriod.from("2027-1")).isEqualTo(AcademicPeriod.TERM_2027_1);
+        assertThat(AcademicPeriod.from(" 2027-3 ")).isEqualTo(AcademicPeriod.TERM_2027_3);
+        assertThat(AcademicPeriod.TERM_2027_1.value()).isEqualTo("2027-1");
+        assertThat(AcademicPeriod.TERM_2027_3.year()).isEqualTo("2027");
+        assertThat(AcademicPeriod.TERM_2027_3.term()).isEqualTo("3");
+
+        assertThatThrownBy(() -> AcademicPeriod.from("2026-1"))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("no es válido");
+        assertThatThrownBy(() -> Course.create("MAT101", "Matemáticas I", "2026-2", "G01"))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
     @DisplayName("addCategory: agrega rubros acumulando la sumatoria de pesos")
     void addCategoryAccumulatesWeights() {
-        Course course = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
+        Course course = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
 
         course.addCategory("Quices", "Quices de la asignatura", CINCUENTA);
         course.addCategory("Talleres", null, CINCUENTA);
@@ -66,7 +82,7 @@ class CourseTest {
     @Test
     @DisplayName("addCategory: rechaza la sumatoria de pesos que exceda el 100%")
     void addCategoryRejectsWeightsExceeding100() {
-        Course course = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
+        Course course = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
         course.addCategory("Quices", null, CINCUENTA);
 
         assertThatThrownBy(() -> course.addCategory("Parciales", null, CINCUENTA.add(DIEZ)))
@@ -81,7 +97,7 @@ class CourseTest {
     @Test
     @DisplayName("addCategory: rechaza nombres de rubro duplicados (case-insensitive)")
     void addCategoryRejectsDuplicateNames() {
-        Course course = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
+        Course course = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
         course.addCategory("Quices", null, DIEZ);
 
         assertThatThrownBy(() -> course.addCategory("quices", null, DIEZ))
@@ -108,7 +124,7 @@ class CourseTest {
     @Test
     @DisplayName("updateCategoryWeight: rechaza un rubro inexistente")
     void updateCategoryWeightRejectsUnknownCategory() {
-        Course course = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
+        Course course = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
 
         assertThatThrownBy(() -> course.updateCategoryWeight(999L, DIEZ))
                 .isInstanceOf(EntityNotFoundException.class);
@@ -128,7 +144,7 @@ class CourseTest {
     @Test
     @DisplayName("removeCategory: rechaza un rubro inexistente")
     void removeCategoryRejectsUnknownCategory() {
-        Course course = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
+        Course course = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
 
         assertThatThrownBy(() -> course.removeCategory(999L))
                 .isInstanceOf(EntityNotFoundException.class);
@@ -137,7 +153,7 @@ class CourseTest {
     @Test
     @DisplayName("close: impide modificar rubros de una asignatura cerrada")
     void closedCourseRejectsCategoryChanges() {
-        Course course = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
+        Course course = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
         course.close();
 
         assertThat(course.isOpen()).isFalse();
@@ -152,7 +168,7 @@ class CourseTest {
     @Test
     @DisplayName("reopen: reabre una asignatura cerrada")
     void reopenAllowsModificationsAgain() {
-        Course course = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
+        Course course = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
         course.close();
         course.reopen();
 
@@ -163,7 +179,7 @@ class CourseTest {
     @Test
     @DisplayName("getCategories: la colección es de solo lectura para el exterior")
     void categoriesCollectionIsReadOnly() {
-        Course course = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
+        Course course = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
         course.addCategory("Quices", null, DIEZ);
 
         assertThatThrownBy(() -> course.getCategories().clear())
@@ -173,13 +189,13 @@ class CourseTest {
     @Test
     @DisplayName("igualdad de identidad por (código, periodo, grupo)")
     void identityIsCodePeriodGroup() {
-        Course first = Course.create("MAT101", "Matemáticas I", "2026-1", "G01");
-        Course second = Course.create("MAT101", "Otro nombre", "2026-1", "G01");
-        Course other = Course.create("MAT101", "Matemáticas I", "2026-1", "G02");
+        Course first = Course.create("MAT101", "Matemáticas I", "2027-1", "G01");
+        Course second = Course.create("MAT101", "Otro nombre", "2027-1", "G01");
+        Course other = Course.create("MAT101", "Matemáticas I", "2027-1", "G02");
 
         assertThat(first).isEqualTo(second);
         assertThat(first).isNotEqualTo(other);
-        assertThat(first.getUniqueKey()).isEqualTo("MAT101-2026-1-G01");
+        assertThat(first.getUniqueKey()).isEqualTo("MAT101-2027-1-G01");
     }
 
     /**
@@ -189,7 +205,7 @@ class CourseTest {
      */
     private Course persistedCourse(WeightPercentage quicesWeight, WeightPercentage talleresWeight) {
         return Course.rehydrate(
-                1L, "MAT101", "Matemáticas I", "2026-1", "G01", CourseStatus.OPEN,
+                1L, "MAT101", "Matemáticas I", "2027-1", "G01", CourseStatus.OPEN,
                 List.of(
                         AssessmentCategory.rehydrate(10L, "Quices", "", quicesWeight),
                         AssessmentCategory.rehydrate(11L, "Talleres", "", talleresWeight)));

@@ -1,5 +1,7 @@
 package com.aabg.notas.course.domain;
 
+import com.aabg.notas.shared.domain.Description;
+import com.aabg.notas.shared.domain.Name;
 import com.aabg.notas.shared.domain.WeightPercentage;
 import com.aabg.notas.shared.exception.BusinessRuleException;
 import java.util.Objects;
@@ -9,7 +11,9 @@ import java.util.Objects;
  * dentro de una asignatura.
  *
  * <p>Ejemplo: 'Quices' (20%), 'Talleres' (20%), 'Parcial 1' (30%), 'Parcial Final' (30%).
- * Su peso es un {@link WeightPercentage} y por tanto siempre es válido por construcción.</p>
+ * Sus atributos con reglas son Value Objects inmutables ({@link Name},
+ * {@link Description}, {@link WeightPercentage}) y por tanto siempre válidos por
+ * construcción.</p>
  *
  * <p>Esta entidad no debe instanciarse ni mutarse fuera del agregado raíz {@link Course};
  * todo cambio en su estado es coordinado por la raíz para proteger las invariantes del agregado.</p>
@@ -17,17 +21,14 @@ import java.util.Objects;
 public class AssessmentCategory {
 
     private final Long id;
-    private String name;
-    private String description;
+    private Name name;
+    private Description description;
     private WeightPercentage weight;
 
     private AssessmentCategory(Long id, String name, String description, WeightPercentage weight) {
-        validateName(name);
-        validateDescription(description);
-
         this.id = id;
-        this.name = name.trim();
-        this.description = description == null ? "" : description.trim();
+        this.name = Name.of(name);
+        this.description = Description.of(description);
         this.weight = Objects.requireNonNull(weight, "El peso del rubro es obligatorio");
     }
 
@@ -49,19 +50,18 @@ public class AssessmentCategory {
 
     /** Renombra el rubro manteniendo su identidad. */
     void rename(String newName) {
-        validateName(newName);
-        this.name = newName.trim();
+        this.name = Name.of(newName);
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getName() {
+    public Name getName() {
         return name;
     }
 
-    public String getDescription() {
+    public Description getDescription() {
         return description;
     }
 
@@ -70,19 +70,7 @@ public class AssessmentCategory {
     }
 
     boolean hasName(String candidateName) {
-        return name.equalsIgnoreCase(candidateName == null ? "" : candidateName.trim());
-    }
-
-    private static void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new BusinessRuleException("El nombre del rubro no puede estar vacío");
-        }
-    }
-
-    private static void validateDescription(String description) {
-        if (description != null && description.length() > 500) {
-            throw new BusinessRuleException("La descripción del rubro no puede exceder 500 caracteres");
-        }
+        return name.equalsIgnoreCase(candidateName);
     }
 
     @Override

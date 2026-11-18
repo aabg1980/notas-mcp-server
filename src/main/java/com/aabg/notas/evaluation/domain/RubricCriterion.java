@@ -1,7 +1,8 @@
 package com.aabg.notas.evaluation.domain;
 
+import com.aabg.notas.shared.domain.Description;
+import com.aabg.notas.shared.domain.Name;
 import com.aabg.notas.shared.domain.WeightPercentage;
-import com.aabg.notas.shared.exception.BusinessRuleException;
 import java.util.Objects;
 
 /**
@@ -9,7 +10,8 @@ import java.util.Objects;
  * de una prueba académica.
  *
  * <p>Ejemplo: 'Claridad en la solución' (máximo 5.00 puntos, peso 40%).
- * Sus valores son Value Objects ({@link MaxPoints}, {@link WeightPercentage}) y por tanto
+ * Sus atributos con reglas son Value Objects inmutables ({@link Name},
+ * {@link Description}, {@link MaxPoints}, {@link WeightPercentage}) y por tanto
  * siempre válidos por construcción.</p>
  *
  * <p>Esta entidad no debe instanciarse ni mutarse fuera del agregado raíz {@link Evaluation};
@@ -18,17 +20,15 @@ import java.util.Objects;
 public class RubricCriterion {
 
     private final Long id;
-    private String name;
-    private String description;
+    private Name name;
+    private final Description description;
     private final MaxPoints maxPoints;
     private WeightPercentage weight;
 
     private RubricCriterion(Long id, String name, String description, MaxPoints maxPoints, WeightPercentage weight) {
-        validateName(name);
-
         this.id = id;
-        this.name = name.trim();
-        this.description = description == null ? "" : description.trim();
+        this.name = Name.of(name);
+        this.description = Description.of(description);
         this.maxPoints = Objects.requireNonNull(maxPoints, "El puntaje máximo del criterio es obligatorio");
         this.weight = Objects.requireNonNull(weight, "El peso del criterio es obligatorio");
     }
@@ -46,8 +46,7 @@ public class RubricCriterion {
 
     /** Renombra el criterio manteniendo su identidad. */
     void rename(String newName) {
-        validateName(newName);
-        this.name = newName.trim();
+        this.name = Name.of(newName);
     }
 
     /** Actualiza el peso del criterio. La raíz del agregado valida la sumatoria antes de invocar. */
@@ -60,11 +59,11 @@ public class RubricCriterion {
         return id;
     }
 
-    public String getName() {
+    public Name getName() {
         return name;
     }
 
-    public String getDescription() {
+    public Description getDescription() {
         return description;
     }
 
@@ -77,13 +76,7 @@ public class RubricCriterion {
     }
 
     boolean hasName(String candidateName) {
-        return name.equalsIgnoreCase(candidateName == null ? "" : candidateName.trim());
-    }
-
-    private static void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new BusinessRuleException("El nombre del criterio de rúbrica no puede estar vacío");
-        }
+        return name.equalsIgnoreCase(candidateName);
     }
 
     @Override

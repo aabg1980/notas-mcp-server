@@ -1,5 +1,7 @@
 package com.aabg.notas.evaluation.domain;
 
+import com.aabg.notas.shared.domain.Description;
+import com.aabg.notas.shared.domain.Name;
 import com.aabg.notas.shared.domain.WeightPercentage;
 import com.aabg.notas.shared.exception.BusinessRuleException;
 import com.aabg.notas.shared.exception.EntityNotFoundException;
@@ -17,7 +19,10 @@ import java.util.Optional;
  * notas (calificaciones) registradas para los estudiantes.
  *
  * <p>Sigue el patrón Rich Domain Model: la raíz protege sus invariantes y expone
- * comportamiento, no setters. Las invariantes del agregado son:</p>
+ * comportamiento, no setters. Los atributos con reglas son Value Objects inmutables
+ * ({@link Name}, {@link Description}, {@link WeightPercentage}), por lo que es
+ * imposible construir el agregado en un estado inválido. Las invariantes del
+ * agregado son:</p>
  * <ul>
  *   <li>La evaluación pertenece obligatoriamente a un rubro (referencia por ID al agregado Course).</li>
  *   <li>El nombre es obligatorio y el peso dentro del rubro es un {@link WeightPercentage} válido.</li>
@@ -38,30 +43,31 @@ public class Evaluation {
 
     private final Long id;
     private final Long categoryId;
-    private String name;
-    private final String description;
+    private Name name;
+    private final Description description;
     private final EvaluationType type;
     private WeightPercentage weightWithinCategory;
     private final LocalDate dueDate;
-    private final String rubricDescription;
+    private final Description rubricDescription;
     private final List<RubricCriterion> criteria = new ArrayList<>();
     private final List<Grade> grades = new ArrayList<>();
 
     private Evaluation(Long id, Long categoryId, String name, String description, EvaluationType type,
                        WeightPercentage weightWithinCategory, LocalDate dueDate, String rubricDescription,
                        List<RubricCriterion> criteria, List<Grade> grades) {
-        validateCategoryId(categoryId);
-        validateName(name);
+        if (categoryId == null) {
+            throw new BusinessRuleException("La evaluación debe pertenecer a un rubro de evaluación de una asignatura");
+        }
 
         this.id = id;
         this.categoryId = categoryId;
-        this.name = name.trim();
-        this.description = description == null ? "" : description.trim();
+        this.name = Name.of(name);
+        this.description = Description.of(description);
         this.type = type != null ? type : EvaluationType.INDIVIDUAL;
         this.weightWithinCategory = Objects.requireNonNull(weightWithinCategory,
                 "El peso de la evaluación dentro del rubro es obligatorio");
         this.dueDate = dueDate;
-        this.rubricDescription = rubricDescription == null ? "" : rubricDescription.trim();
+        this.rubricDescription = Description.of(rubricDescription);
         if (criteria != null) {
             this.criteria.addAll(criteria);
         }
@@ -91,8 +97,7 @@ public class Evaluation {
 
     /** Renombra la evaluación manteniendo su identidad. */
     public void rename(String newName) {
-        validateName(newName);
-        this.name = newName.trim();
+        this.name = Name.of(newName);
     }
 
     /** Actualiza el peso de la evaluación dentro de su rubro. */
@@ -119,7 +124,8 @@ public class Evaluation {
 
         if (hasCriterionNamed(name)) {
             throw new BusinessRuleException(String.format(
-                    "La evaluación '%s' ya tiene un criterio de rúbrica llamado '%s'", this.name, name.trim()));
+                    "La evaluación '%s' ya tiene un criterio de rúbrica llamado '%s'",
+                    this.name, name.trim()));
         }
 
         BigDecimal newTotal = totalRubricWeight().add(weight.value());
@@ -225,11 +231,11 @@ public class Evaluation {
         return categoryId;
     }
 
-    public String getName() {
+    public Name getName() {
         return name;
     }
 
-    public String getDescription() {
+    public Description getDescription() {
         return description;
     }
 
@@ -245,7 +251,7 @@ public class Evaluation {
         return dueDate;
     }
 
-    public String getRubricDescription() {
+    public Description getRubricDescription() {
         return rubricDescription;
     }
 
@@ -269,18 +275,6 @@ public class Evaluation {
 
     private boolean hasCriterionNamed(String candidateName) {
         return criteria.stream().anyMatch(c -> c.hasName(candidateName));
-    }
-
-    private static void validateCategoryId(Long categoryId) {
-        if (categoryId == null) {
-            throw new BusinessRuleException("La evaluación debe pertenecer a un rubro de evaluación de una asignatura");
-        }
-    }
-
-    private static void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new BusinessRuleException("El nombre de la evaluación no puede estar vacío");
-        }
     }
 
     @Override

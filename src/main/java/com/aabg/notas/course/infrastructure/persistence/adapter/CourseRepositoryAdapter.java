@@ -88,8 +88,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
             AssessmentCategoryEntity entity = new AssessmentCategoryEntity(
                     category.getId(),
                     courseId,
-                    category.getName(),
-                    category.getDescription(),
+                    category.getName().value(),
+                    category.getDescription().value(),
                     category.getWeight().value().doubleValue());
             AssessmentCategoryEntity saved = jpaAssessmentCategoryRepository.save(entity);
             keptIds.add(saved.getId());
@@ -107,10 +107,10 @@ public class CourseRepositoryAdapter implements CourseRepository {
     private CourseEntity toEntity(Course domain) {
         return new CourseEntity(
                 domain.getId(),
-                domain.getCode(),
-                domain.getName(),
-                domain.getAcademicPeriod(),
-                domain.getGroupId(),
+                domain.getCode().value(),
+                domain.getName().value(),
+                domain.getAcademicPeriod().value(),
+                domain.getGroupId().value(),
                 domain.getStatus().name());
     }
 

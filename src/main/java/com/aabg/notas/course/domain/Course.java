@@ -1,5 +1,7 @@
 package com.aabg.notas.course.domain;
 
+import com.aabg.notas.shared.domain.Description;
+import com.aabg.notas.shared.domain.Name;
 import com.aabg.notas.shared.domain.WeightPercentage;
 import com.aabg.notas.shared.exception.BusinessRuleException;
 import com.aabg.notas.shared.exception.EntityNotFoundException;
@@ -15,9 +17,13 @@ import java.util.Optional;
  * en un periodo académico y grupo específico.
  *
  * <p>Sigue el patrón Rich Domain Model: la raíz protege sus invariantes y expone
- * comportamiento, no setters. Las invariantes del agregado son:</p>
+ * comportamiento, no setters. Los atributos con reglas son Value Objects inmutables
+ * ({@link CourseCode}, {@link Name}, {@link AcademicPeriod}, {@link GroupId}), por lo
+ * que es imposible construir el agregado en un estado inválido. Las invariantes del
+ * agregado son:</p>
  * <ul>
- *   <li>El código, nombre, periodo académico y grupo son obligatorios.</li>
+ *   <li>El código, nombre, periodo académico y grupo son obligatorios y válidos (garantizado por los VOs).</li>
+ *   <li>El periodo académico pertenece al catálogo finito de periodos válidos (enum).</li>
  *   <li>La sumatoria de pesos de los rubros nunca excede el 100%.</li>
  *   <li>Los nombres de rubros son únicos dentro de la asignatura (sin distinción de mayúsculas).</li>
  *   <li>Una asignatura cerrada (CLOSED) no admite modificaciones en su estructura de rubros.</li>
@@ -32,25 +38,20 @@ public class Course {
     private static final BigDecimal TOTAL_WEIGHT_LIMIT = WeightPercentage.MAX;
 
     private final Long id;
-    private final String code;
-    private String name;
-    private final String academicPeriod;
-    private final String groupId;
+    private final CourseCode code;
+    private Name name;
+    private final AcademicPeriod academicPeriod;
+    private final GroupId groupId;
     private CourseStatus status;
     private final List<AssessmentCategory> categories = new ArrayList<>();
 
     private Course(Long id, String code, String name, String academicPeriod, String groupId,
                    CourseStatus status, List<AssessmentCategory> categories) {
-        validateCode(code);
-        validateName(name);
-        validateAcademicPeriod(academicPeriod);
-        validateGroupId(groupId);
-
         this.id = id;
-        this.code = code.trim().toUpperCase();
-        this.name = name.trim();
-        this.academicPeriod = academicPeriod.trim();
-        this.groupId = groupId.trim().toUpperCase();
+        this.code = CourseCode.of(code);
+        this.name = Name.of(name);
+        this.academicPeriod = AcademicPeriod.from(academicPeriod);
+        this.groupId = GroupId.of(groupId);
         this.status = status != null ? status : CourseStatus.OPEN;
         if (categories != null) {
             this.categories.addAll(categories);
@@ -72,8 +73,7 @@ public class Course {
 
     /** Renombra la asignatura. Operación permitida incluso con el curso cerrado. */
     public void rename(String newName) {
-        validateName(newName);
-        this.name = newName.trim();
+        this.name = Name.of(newName);
     }
 
     /**
@@ -189,7 +189,7 @@ public class Course {
 
     /** Clave única de negocio de la asignatura (código + periodo + grupo). */
     public String getUniqueKey() {
-        return code + "-" + academicPeriod + "-" + groupId;
+        return code.value() + "-" + academicPeriod.value() + "-" + groupId.value();
     }
 
     // ==================== Consultas ====================
@@ -198,19 +198,19 @@ public class Course {
         return id;
     }
 
-    public String getCode() {
+    public CourseCode getCode() {
         return code;
     }
 
-    public String getName() {
+    public Name getName() {
         return name;
     }
 
-    public String getAcademicPeriod() {
+    public AcademicPeriod getAcademicPeriod() {
         return academicPeriod;
     }
 
-    public String getGroupId() {
+    public GroupId getGroupId() {
         return groupId;
     }
 
@@ -239,30 +239,6 @@ public class Course {
         if (!isOpen()) {
             throw new BusinessRuleException(String.format(
                     "La asignatura '%s' está cerrada y no permite %s", code, operation));
-        }
-    }
-
-    private static void validateCode(String code) {
-        if (code == null || code.isBlank()) {
-            throw new BusinessRuleException("El código de la asignatura no puede estar vacío");
-        }
-    }
-
-    private static void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new BusinessRuleException("El nombre de la asignatura no puede estar vacío");
-        }
-    }
-
-    private static void validateAcademicPeriod(String academicPeriod) {
-        if (academicPeriod == null || academicPeriod.isBlank()) {
-            throw new BusinessRuleException("El periodo académico no puede estar vacío (ej. '2026-1')");
-        }
-    }
-
-    private static void validateGroupId(String groupId) {
-        if (groupId == null || groupId.isBlank()) {
-            throw new BusinessRuleException("El ID de grupo no puede estar vacío (ej. 'G01')");
         }
     }
 
